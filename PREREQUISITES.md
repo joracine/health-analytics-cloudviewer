@@ -114,6 +114,30 @@ You should see something like `v20.x.x` or `v22.x.x` for Node, and `9.x.x` or `1
 
 ---
 
+## 2b. AWS CDK CLI
+
+The CDK CLI (`cdk` command) is used to init, build, and deploy stacks. Install it **globally** so `cdk` is available in any folder.
+
+**Install (PowerShell or Command Prompt):**
+
+```powershell
+npm install -g aws-cdk
+```
+
+**Check:**
+
+```powershell
+cdk --version
+```
+
+You should see a version like `2.x.x`.
+
+**If `cdk` is not recognized after install:** Close and reopen the terminal (or restart Cursor). npm installs global tools to a folder that should be on your PATH; if it’s still missing, that folder may not be in PATH — on Windows it’s often `%APPDATA%\npm` or next to your Node install. You can run CDK without global install by using `npx cdk` from a project that has `aws-cdk` as a dependency.
+
+- [ ] `cdk --version` works
+
+---
+
 ## 3. AWS CLI configured
 
 The CLI must be installed and configured with credentials for the account/region you will deploy to.
@@ -224,11 +248,11 @@ If GitHub prompts for sign-in, use your GitHub username and a **Personal Access 
 
 ### 4.3 Checklist
 
-- [ ] GitHub repo created (Section 4.1)
-- [ ] Local project folder is a Git repo and `origin` points to the GitHub repo (Section 4.2)
-- [ ] Initial code pushed to `main` (or your chosen branch); pipeline will use this branch in Phase 2
+- [x] GitHub repo created (Section 4.1)
+- [x] Local project folder is a Git repo and `origin` points to the GitHub repo (Section 4.2)
+- [x] Initial code pushed to `main` (or your chosen branch); pipeline will use this branch in Phase 2
 
-**For Phase 1** you can work locally without a remote. **For Phase 2** the code must be in this GitHub repo and the pipeline will pull from the branch you configured.
+**Status: GitHub repo prerequisite completed.**
 
 ---
 
@@ -246,7 +270,15 @@ You should see something like `git version 2.43.0.windows.1`.
 
 **If missing – Windows:** Install **Git for Windows** from https://git-scm.com/download/win. Use the default options (including “Git from the command line and also from 3rd-party software” so `git` is on PATH). Restart the terminal after install.
 
-- [ ] Git is installed
+- [x] Git is installed
+
+**Status: Git prerequisite completed.**
+
+---
+
+## All prerequisites completed
+
+You’re ready to start **Phase 1** of [PLAN.md](PLAN.md): build the application (CDK app, upload bucket, presign Lambda, API Gateway, website), then add the pipeline in Phase 2.
 
 ---
 
@@ -264,4 +296,4 @@ aws sts get-caller-identity
 If all succeed (Node and npm show versions, git shows version, AWS returns account/user info), you’re set.  
 *Note: In Windows PowerShell 5.1, `&&` doesn’t work between commands; use separate lines or a semicolon: `node -v; npm -v; git --version; aws sts get-caller-identity`.*
 
-When all items above are checked, you’re ready to start **Phase 1** of [PLAN.md](PLAN.md).
+If all commands succeed, prerequisites are in place.

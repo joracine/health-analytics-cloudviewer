@@ -1,6 +1,8 @@
 # CloudViewer – Build and deploy plan
 
-Goal: build the application from [PROPOSAL.md](PROPOSAL.md), then add an **AWS CI/CD pipeline** so every change can be re-deployed easily. Use **CodePipeline**, **CodeBuild**, and related AWS services; define the pipeline in CDK so it’s all in code.
+Goal: build the application from [PROPOSAL.md](PROPOSAL.md), then add an **AWS CI/CD pipeline** so every change can be re-deployed easily.
+
+**Execution:** The agent follows [EXECUTION-PLAN.md](EXECUTION-PLAN.md) to track and perform each step; checkboxes there are updated as work completes. Use **CodePipeline**, **CodeBuild**, and related AWS services; define the pipeline in CDK so it’s all in code.
 
 **Windows:** All commands in this plan can be run in **PowerShell** or **Command Prompt** from the project folder. Use backslashes or forward slashes in paths; CDK and npm work the same on Windows. See [PREREQUISITES.md](PREREQUISITES.md) for Windows-specific setup.
 
@@ -31,7 +33,7 @@ Get the app working with a manual deploy first. The pipeline will later do the s
 
 | Step | What to do |
 |------|------------|
-| **1.1** | Open PowerShell or Command Prompt in the project folder. Run: `cdk init app --language typescript`. Align folder names with [PROPOSAL.md](PROPOSAL.md) (e.g. `lib/`, `bin/`, `lambda/`, `website/`). |
+| **1.1** | **CDK app in TypeScript:** If the project folder is **empty**, run `cdk init app --language typescript`. If the folder already has files (e.g. PROPOSAL.md, PLAN.md), `cdk init` will refuse to run — create the CDK structure manually: `package.json`, `cdk.json`, `tsconfig.json`, `bin/app.ts`, `lib/upload-stack.ts` (see repo), then run `npm install`. Align folder names with [PROPOSAL.md](PROPOSAL.md) (e.g. `lib/`, `bin/`, `lambda/`, `website/`). |
 | **1.2** | Create the upload S3 bucket and CORS in a stack (e.g. `lib/upload-stack.ts` or single stack in `lib/`). Bucket name per proposal (e.g. `cloudviewer-uploads-<account-id>`); object key prefix `userdata/pdftestresults/`. |
 | **1.3** | Add presign Lambda under `lambda/presign/`: handler reads `filename` from body, returns `{ url, key }` with key `userdata/pdftestresults/<userid>-<uuid>-<filename>`. Wire bucket name (and region) via env. |
 | **1.4** | Add API Gateway (HTTP or REST): one route `POST /uploaded` → presign Lambda. Enable CORS `*` for now. |
