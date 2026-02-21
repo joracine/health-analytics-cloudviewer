@@ -21,41 +21,41 @@
 
 ### 1.2 Upload S3 bucket and CORS
 
-- [ ] In `lib/upload-stack.ts`, add an S3 bucket. Bucket name: use a unique name (e.g. `cloudviewer-uploads-${accountId}` or `Bucket.generateUniqueName`).
-- [ ] Add CORS to the bucket: allow `*` origin, methods `PUT` and `GET`, headers needed for presigned PUT (e.g. `*` or list them).
-- [ ] Expose the bucket name (and optionally region) so the Lambda can be given it (e.g. store in a class property or pass to Lambda env).
+- [ ] In `lib/upload-stack.ts`, add an S3 bucket. Bucket name: `cloudviewer-uploads-${this.account}`.
+- [ ] Add CORS to the bucket: allow `*` origin, methods `PUT` and `GET`, allowed headers `*`.
+- [ ] Expose the bucket name (and region) as a class property or Lambda env so the presign Lambda can use it.
 - [ ] Run `npx cdk synth` and confirm the bucket and CORS appear in the template.
 
 ### 1.3 Presign Lambda
 
-- [ ] Create `lambda/presign/index.ts` (or `index.js` if using JS). Handler: parse request body for `{ "filename": "..." }`, build key `userdata/pdftestresults/<hardcoded-userid>-<uuid>-<filename>`, generate presigned PUT URL for that key, return `{ "url", "key" }`. Use hardcoded user ID UUID and `crypto.randomUUID()` (or equivalent) for per-file UUID.
-- [ ] Sanitize or restrict filename (e.g. no path traversal); keep key under `userdata/pdftestresults/`.
-- [ ] In `lib/upload-stack.ts`, add a Lambda function: runtime Node 20 (or 18), handler pointing to `lambda/presign`, environment variables for bucket name and region. Grant the Lambda `s3:PutObject` (and read if needed) on the upload bucket.
+- [ ] Create `lambda/presign/index.ts`. Use CDK `NodejsFunction` so it is built and bundled from TypeScript. Handler: parse request body for `{ "filename": "..." }`, build key `userdata/pdftestresults/<hardcoded-userid>-<uuid>-<filename>`, generate presigned PUT URL for that key, return `{ "url", "key" }`. Use hardcoded user ID UUID and `crypto.randomUUID()` for per-file UUID.
+- [ ] Sanitize filename (no path traversal); keep key under `userdata/pdftestresults/`.
+- [ ] In `lib/upload-stack.ts`, add the Lambda: runtime Node 20, `NodejsFunction` pointing at `lambda/presign`, environment variables for bucket name and region. Grant the Lambda `s3:PutObject` only on the upload bucket.
 - [ ] Run `npx cdk synth` and confirm the Lambda and its asset are present.
 
 ### 1.4 API Gateway (POST /uploaded)
 
-- [ ] In `lib/upload-stack.ts`, add API Gateway (HTTP API or REST). Create one route: `POST /uploaded` (or `POST /uploaded` with proxy) that invokes the presign Lambda.
+- [ ] In `lib/upload-stack.ts`, add an HTTP API (apigatewayv2). Create exactly one route: `POST /uploaded` that invokes the presign Lambda.
 - [ ] Enable CORS on the API: allow `*` origin for now.
-- [ ] Expose the API URL (e.g. `api.url` or stack output) so the website can be configured with it.
+- [ ] Expose the API URL (stack output or for config.js) so the website can use it.
 - [ ] Run `npx cdk synth` and confirm the API and integration are present.
 
 ### 1.5 Static website (S3 + CloudFront)
 
-- [ ] Create `website/index.html`: file input (Browse), Upload button, script that calls `POST /uploaded` with `{ "filename": "<chosen file name>" }`, then PUTs the file to the returned presigned URL.
-- [ ] In `lib/upload-stack.ts`, add an S3 bucket for website assets. Upload `website/index.html` (and any other assets) into it. Configure the bucket for static website hosting or as CloudFront origin (no public read policy if using CloudFront only).
-- [ ] Add a CloudFront distribution: origin = website bucket, default behavior serve from origin. No custom domain. Optionally add an output for the distribution URL.
-- [ ] Run `npx cdk synth` and confirm the website bucket, CloudFront distribution, and any Lambda/asset for deployment are present.
+- [ ] Create `website/index.html`: file input (Browse), Upload button, script that calls the API at full URL with `{ "filename": "<chosen file name>" }`, then PUTs the file to the returned presigned URL.
+- [ ] In `lib/upload-stack.ts`, add an S3 bucket for website assets. Upload `website/index.html` (and generated config.js in 1.6) into it. CloudFront origin only: use Origin Access Control (OAC); no public read on the bucket.
+- [ ] Add a CloudFront distribution: origin = website bucket (OAC), default behavior serve from origin. No custom domain. Add a stack output for the distribution URL.
+- [ ] Run `npx cdk synth` and confirm the website bucket, CloudFront distribution, and assets are present.
 
 ### 1.6 Wire API URL into website
 
-- [ ] Ensure the website’s JavaScript uses the API base URL. Options: (A) CDK injects the API URL at deploy time (e.g. replace placeholder in `index.html` or emit a small `config.js`), or (B) website reads from a known stack output / config endpoint. Implement one approach.
-- [ ] Ensure the API Gateway URL is passed (e.g. as stack output or build-time replacement) and the frontend uses it for `fetch('/uploaded', ...)` (or full URL if cross-origin).
+- [ ] At deploy time, CDK generates a small `config.js` (e.g. `window.API_BASE_URL = '<API URL>'`) and deploys it with the website assets.
+- [ ] In `website/index.html`, load `config.js` and use the full API URL for the presign call: `fetch(\`${API_BASE_URL}/uploaded\`, ...)`.
 
 ### 1.7 Deploy and test
 
-- [ ] Run `npm run build` (if applicable) and `npx cdk deploy CloudViewerStack` (or `npx cdk deploy`).
-- [ ] From stack outputs, note the CloudFront URL (and API URL if output).
+- [ ] Run `npx cdk deploy CloudViewerStack` (no need to run `npm run build` first; CDK runs the app via ts-node).
+- [ ] From stack outputs, note the CloudFront URL and API URL.
 - [ ] Open CloudFront URL in browser: choose a file (Browse), click Upload. Confirm the file appears in the upload bucket under prefix `userdata/pdftestresults/` with key format `<userid>-<uuid>-<filename>`.
 
 ---
@@ -73,27 +73,27 @@
 ### 2.3 Source (GitHub)
 
 - [ ] Document or ensure user has created a CodeStar Connection to GitHub (AWS Console → Developer Tools → Connections) for repo `health-analytics-cloudviewer` and branch `main`.
-- [ ] In the pipeline stack, add source using the connection: `codestar_connections.SourceConnection` or equivalent, with repo owner, repo name `health-analytics-cloudviewer`, branch `main`. Wire as the pipeline’s first stage.
+- [ ] In the pipeline stack, add source using the connection. Repo owner: from stack prop or `cdk.json` context (user sets their GitHub username/org). Repo name: `health-analytics-cloudviewer`. Branch: `main`. Wire as the pipeline’s first stage.
 
 ### 2.4 Build stage
 
-- [ ] Add a build step (e.g. `ShellStep`) that runs: `npm ci`, `npm run build`, `npx cdk synth`. Use a CodeBuild image with Node 20 (e.g. `standard:7` or `aws/codebuild/standard:7`). Output `cdk.out` as the primary output artifact for the deploy stage.
+- [ ] Add a `ShellStep` that runs: `npm ci`, `npm run build`, `npx cdk synth`. Use CodeBuild image `LinuxBuildImage.STANDARD_7_0` (Node 20). Output `cdk.out` as the primary output artifact for the deploy stage.
 
 ### 2.5 Deploy stage
 
-- [ ] Add a stage to the pipeline that deploys the application stack (`CloudViewerStack`). Use the pipeline’s `addStage()` (or equivalent) with the app stack. Ensure the synth output from 2.4 is used as the source for CloudFormation deploy.
+- [ ] Add a stage to the pipeline that deploys the application stack (`CloudViewerStack`). Use the pipeline’s `addStage()` with the app stack. The synth output from 2.4 is the source for CloudFormation deploy.
 
 ### 2.6 App entrypoint
 
-- [ ] In `bin/app.ts`, instantiate the pipeline stack (e.g. `PipelineStack`) in addition to or instead of directly instantiating `CloudViewerStack` (the pipeline will deploy the app stack). Ensure the pipeline stack receives the app stack or can reference it for the deploy stage.
+- [ ] In `bin/app.ts`, instantiate both `CloudViewerStack` and `PipelineStack`. Pass the app stack (or a stage wrapping it) into `PipelineStack` so the pipeline can call `pipeline.addStage(...)` with it. The pipeline deploys the app stack; both stacks are created in `bin/app.ts`.
 
 ### 2.7 Bootstrap
 
-- [ ] Run `npx cdk bootstrap` for the target account/region (user or agent). Document that this must be done once per account/region.
+- [ ] Run `npx cdk bootstrap` for the target account/region. Document that this must be done once per account/region.
 
 ### 2.8 Deploy pipeline
 
-- [ ] Run `npx cdk deploy PipelineStack` (or the chosen pipeline stack name). Resolve any errors (e.g. CodeStar Connection not “Available”). Confirm CodePipeline and CodeBuild are created.
+- [ ] Run `npx cdk deploy PipelineStack`. Resolve any errors (e.g. CodeStar Connection not “Available”). Confirm CodePipeline and CodeBuild are created.
 
 ---
 
@@ -111,9 +111,9 @@
 
 - [ ] Open the CloudFront URL from stack outputs. Test Browse + Upload again. Confirm object key prefix `userdata/pdftestresults/` and correct key format.
 
-### 3.4 (Optional) Lint/test in pipeline
+### 3.4 Lint/test in pipeline
 
-- [ ] Add a step in the build (e.g. `npm run lint`, `npm test`) so the pipeline fails on regressions before deploy.
+- [ ] Add a step in the build (e.g. `npm run lint`, `npm test`) so the pipeline fails on regressions before deploy. Add lint/test scripts to `package.json` if not present.
 
 ---
 
