@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CloudViewer – Upload</title>
+</head>
+<body>
+  <h1>Upload file</h1>
+  <input type="file" id="file" />
+  <button type="button" id="upload">Upload</button>
+  <p id="status"></p>
+
+  <script src="config.js"></script>
+  <script>
+    document.getElementById('upload').addEventListener('click', async function () {
+      const fileInput = document.getElementById('file');
+      const status = document.getElementById('status');
+      const file = fileInput?.files?.[0];
+      if (!file) {
+        status.textContent = 'Please choose a file.';
+        return;
+      }
+      if (typeof window.API_BASE_URL !== 'string' || !window.API_BASE_URL) {
+        status.textContent = 'API URL not configured (config.js).';
+        return;
+      }
+      status.textContent = 'Requesting upload URL…';
+      try {
+        const res = await fetch(window.API_BASE_URL + '/uploaded', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename: file.name }),
+        });
+        if (!res.ok) {
+          const err = await res.text();
+          status.textContent = 'Error: ' + (err || res.status);
+          return;
+        }
+        const { url, key } = await res.json();
+        if (!url) {
+          status.textContent = 'No upload URL in response.';
+          return;
+        }
+        status.textContent = 'Uploading…';
+        const putRes = await fetch(url, {
+          method: 'PUT',
+          body: file,
+        });
+        if (!putRes.ok) {
+          status.textContent = 'Upload failed: ' + putRes.status;
+          return;
+        }
+        status.textContent = 'Uploaded as ' + (key || file.name);
+      } catch (e) {
+        status.textContent = 'Error: ' + (e.message || e);
+      }
+    });
+  </script>
+</body>
+</html>

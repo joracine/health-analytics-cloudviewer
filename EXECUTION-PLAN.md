@@ -21,41 +21,41 @@
 
 ### 1.2 Upload S3 bucket and CORS
 
-- [ ] In `lib/upload-stack.ts`, add an S3 bucket. Bucket name: `cloudviewer-uploads-${this.account}`.
-- [ ] Add CORS to the bucket: allow `*` origin, methods `PUT` and `GET`, allowed headers `*`.
-- [ ] Expose the bucket name (and region) as a class property or Lambda env so the presign Lambda can use it.
-- [ ] Run `npx cdk synth` and confirm the bucket and CORS appear in the template.
+- [x] In `lib/upload-stack.ts`, add an S3 bucket. Bucket name: `cloudviewer-uploads-${this.account}`.
+- [x] Add CORS to the bucket: allow `*` origin, methods `PUT` and `GET`, allowed headers `*`.
+- [x] Expose the bucket name (and region) as a class property or Lambda env so the presign Lambda can use it.
+- [x] Run `npx cdk synth` and confirm the bucket and CORS appear in the template.
 
 ### 1.3 Presign Lambda
 
-- [ ] Create `lambda/presign/index.ts`. Use CDK `NodejsFunction` so it is built and bundled from TypeScript. Handler: parse request body for `{ "filename": "..." }`, build key `userdata/pdftestresults/<hardcoded-userid>-<uuid>-<filename>`, generate presigned PUT URL for that key, return `{ "url", "key" }`. Use hardcoded user ID UUID and `crypto.randomUUID()` for per-file UUID.
-- [ ] Sanitize filename (no path traversal); keep key under `userdata/pdftestresults/`.
-- [ ] In `lib/upload-stack.ts`, add the Lambda: runtime Node 20, `NodejsFunction` pointing at `lambda/presign`, environment variables for bucket name and region. Grant the Lambda `s3:PutObject` only on the upload bucket.
-- [ ] Run `npx cdk synth` and confirm the Lambda and its asset are present.
+- [x] Create `lambda/presign/index.ts`. Use CDK `NodejsFunction` so it is built and bundled from TypeScript. Handler: parse request body for `{ "filename": "..." }`, build key `userdata/pdftestresults/<hardcoded-userid>-<uuid>-<filename>`, generate presigned PUT URL for that key, return `{ "url", "key" }`. Use hardcoded user ID UUID and `crypto.randomUUID()` for per-file UUID.
+- [x] Sanitize filename (no path traversal); keep key under `userdata/pdftestresults/`.
+- [x] In `lib/upload-stack.ts`, add the Lambda: runtime Node 20, `NodejsFunction` pointing at `lambda/presign`, environment variables for bucket name and region. Grant the Lambda `s3:PutObject` only on the upload bucket.
+- [x] Run `npx cdk synth` and confirm the Lambda and its asset are present.
 
 ### 1.4 API Gateway (POST /uploaded)
 
-- [ ] In `lib/upload-stack.ts`, add an HTTP API (apigatewayv2). Create exactly one route: `POST /uploaded` that invokes the presign Lambda.
-- [ ] Enable CORS on the API: allow `*` origin for now.
-- [ ] Expose the API URL (stack output or for config.js) so the website can use it.
-- [ ] Run `npx cdk synth` and confirm the API and integration are present.
+- [x] In `lib/upload-stack.ts`, add an HTTP API (apigatewayv2). Create exactly one route: `POST /uploaded` that invokes the presign Lambda.
+- [x] Enable CORS on the API: allow `*` origin for now.
+- [x] Expose the API URL (stack output or for config.js) so the website can use it.
+- [x] Run `npx cdk synth` and confirm the API and integration are present.
 
 ### 1.5 Static website (S3 + CloudFront)
 
-- [ ] Create `website/index.html`: file input (Browse), Upload button, script that calls the API at full URL with `{ "filename": "<chosen file name>" }`, then PUTs the file to the returned presigned URL.
-- [ ] In `lib/upload-stack.ts`, add an S3 bucket for website assets. Upload `website/index.html` (and generated config.js in 1.6) into it. CloudFront origin only: use Origin Access Control (OAC); no public read on the bucket.
-- [ ] Add a CloudFront distribution: origin = website bucket (OAC), default behavior serve from origin. No custom domain. Add a stack output for the distribution URL.
-- [ ] Run `npx cdk synth` and confirm the website bucket, CloudFront distribution, and assets are present.
+- [x] Create `website/index.html`: file input (Browse), Upload button, script that calls the API at full URL with `{ "filename": "<chosen file name>" }`, then PUTs the file to the returned presigned URL.
+- [x] In `lib/upload-stack.ts`, add an S3 bucket for website assets. Upload `website/index.html` (and generated config.js in 1.6) into it. CloudFront origin only: use Origin Access Control (OAC); no public read on the bucket.
+- [x] Add a CloudFront distribution: origin = website bucket (OAC), default behavior serve from origin. No custom domain. Add a stack output for the distribution URL.
+- [x] Run `npx cdk synth` and confirm the website bucket, CloudFront distribution, and assets are present.
 
 ### 1.6 Wire API URL into website
 
-- [ ] At deploy time, CDK generates a small `config.js` (e.g. `window.API_BASE_URL = '<API URL>'`) and deploys it with the website assets.
-- [ ] In `website/index.html`, load `config.js` and use the full API URL for the presign call: `fetch(\`${API_BASE_URL}/uploaded\`, ...)`.
+- [x] At deploy time, CDK generates a small `config.js` (e.g. `window.API_BASE_URL = '<API URL>'`) and deploys it with the website assets.
+- [x] In `website/index.html`, load `config.js` and use the full API URL for the presign call: `fetch(\`${API_BASE_URL}/uploaded\`, ...)`.
 
 ### 1.7 Deploy and test
 
-- [ ] Run `npx cdk deploy CloudViewerStack` (no need to run `npm run build` first; CDK runs the app via ts-node).
-- [ ] From stack outputs, note the CloudFront URL and API URL.
+- [x] Run `npx cdk deploy CloudViewerStack` (no need to run `npm run build` first; CDK runs the app via ts-node).
+- [x] From stack outputs, note the CloudFront URL and API URL.
 - [ ] Open CloudFront URL in browser: choose a file (Browse), click Upload. Confirm the file appears in the upload bucket under prefix `userdata/pdftestresults/` with key format `<userid>-<uuid>-<filename>`.
 
 ---
