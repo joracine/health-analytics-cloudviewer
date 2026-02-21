@@ -1,3 +1,7 @@
+/**
+ * CloudViewer upload stack: static site (CloudFront + S3), presign API, and upload bucket.
+ * Flow: browser → POST /uploaded → Lambda returns presigned URL → browser PUTs file to S3.
+ */
 import * as path from 'path';
 import * as cdk from 'aws-cdk-lib';
 import * as apigwv2 from 'aws-cdk-lib/aws-apigatewayv2';
@@ -10,28 +14,32 @@ import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
 import { Construct } from 'constructs';
 
-/** Key prefix in upload bucket for upload objects. */
+/** Key prefix for uploads in the single parent bucket. */
 export const UPLOAD_KEY_PREFIX = 'uploads/userdata/pdftestresults/';
 
+/** Key prefix for website assets in the same bucket (console "subfolder"). */
+export const WEBSITE_KEY_PREFIX = 'website/';
+
 export class CloudViewerStack extends cdk.Stack {
-  /** Upload bucket: uploads under uploads/userdata/pdftestresults/. */
+  /** Single parent bucket: uploads under UPLOAD_KEY_PREFIX, website under WEBSITE_KEY_PREFIX. */
   public readonly masterBucket: s3.Bucket;
 
-  /** Website bucket (CloudFront origin); name cfn-website-bucket-<accountId>. */
-  public readonly cfnWebsiteBucket: s3.Bucket;
-
-  /** Presign Lambda: returns presigned PUT URL for uploads. */
+  /** Returns presigned PUT URL for given filename. */
   public readonly presignFn: lambdaNodejs.NodejsFunction;
 
-  /** HTTP API (base URL for /uploaded); use apiUrl for website config. */
+  /** POST /uploaded → presign Lambda. URL injected into website config.js. */
   public readonly httpApi: apigwv2.HttpApi;
 
-  /** CloudFront distribution for the website (origin = cfn-website-bucket). */
+  /** Serves website from master bucket prefix WEBSITE_KEY_PREFIX. */
   public readonly distribution: cloudfront.Distribution;
 
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
+    // Permissions: bucket BLOCK_ALL + CORS for browser PUT; presign = PutObject (upload prefix only);
+    // CloudFront = OAC GetObject; BucketDeployment = write website prefix; API invokes Lambda via integration.
+
+    // --- Upload bucket + presign Lambda ---
     this.masterBucket = new s3.Bucket(this, 'MasterBucket', {
       bucketName: `health-analytics-cloudviewer-${this.account}`,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
@@ -57,13 +65,10 @@ export class CloudViewerStack extends cdk.Stack {
         forceDockerBundling: false,
       },
     });
-    this.masterBucket.grantPut(this.presignFn);
+    // Presign Lambda: only allow generating PUT URLs for keys under UPLOAD_KEY_PREFIX
+    this.masterBucket.grantPut(this.presignFn, `${UPLOAD_KEY_PREFIX}*`);
 
-    this.cfnWebsiteBucket = new s3.Bucket(this, 'CfnWebsiteBucket', {
-      bucketName: `cfn-website-bucket-${this.account}`,
-      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-    });
-
+    // --- API: POST /uploaded → presign Lambda ---
     this.httpApi = new apigwv2.HttpApi(this, 'UploadApi', {
       apiName: 'cloudviewer-upload-api',
       corsPreflight: {
@@ -80,13 +85,16 @@ export class CloudViewerStack extends cdk.Stack {
 
     new cdk.CfnOutput(this, 'UploadApiUrl', {
       value: this.httpApi.url ?? '',
-      description: 'Base URL of the upload API (use with /uploaded)',
+      description: 'Upload API base URL (append /uploaded)',
       exportName: 'CloudViewerUploadApiUrl',
     });
 
+    // --- CloudFront serves website from master bucket prefix WEBSITE_KEY_PREFIX ---
     this.distribution = new cloudfront.Distribution(this, 'WebsiteDistribution', {
       defaultBehavior: {
-        origin: origins.S3BucketOrigin.withOriginAccessControl(this.cfnWebsiteBucket),
+        origin: origins.S3BucketOrigin.withOriginAccessControl(this.masterBucket, {
+          originPath: '/website',
+        }),
       },
       defaultRootObject: 'index.html',
     });
@@ -99,7 +107,8 @@ export class CloudViewerStack extends cdk.Stack {
           `window.API_BASE_URL = '${this.httpApi.url ?? ''}';`
         ),
       ],
-      destinationBucket: this.cfnWebsiteBucket,
+      destinationBucket: this.masterBucket,
+      destinationKeyPrefix: WEBSITE_KEY_PREFIX,
       distribution: this.distribution,
       distributionPaths: ['/*'],
     });
