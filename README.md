@@ -8,7 +8,7 @@ The app is deployed **only through the pipeline**. From the project root, with A
 
 ```powershell
 cd "d:\Google Drive\Health\Analyses\CloudViewer.project"
-npx cdk deploy PipelineStack --require-approval never
+npx cdk deploy DeploymentPipelineStack --require-approval never
 ```
 
 First-time in an account/region, bootstrap first:

@@ -20,7 +20,7 @@ export const UPLOAD_KEY_PREFIX = 'uploads/userdata/pdftestresults/';
 /** Key prefix for website assets in the same bucket (console "subfolder"). */
 export const WEBSITE_KEY_PREFIX = 'website/';
 
-export class CloudViewerStack extends cdk.Stack {
+export class HealthAnalyticsCloudViewerStack extends cdk.Stack {
   /** Single parent bucket: uploads under UPLOAD_KEY_PREFIX, website under WEBSITE_KEY_PREFIX. */
   public readonly masterBucket: s3.Bucket;
 

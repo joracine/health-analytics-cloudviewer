@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import * as cdk from 'aws-cdk-lib';
-import { PipelineStack } from '../lib/Pipeline-stack';
+import { DeploymentPipelineStack } from '../lib/deployment-pipeline-stack';
 import { HealthAnalyticsCloudViewerStack } from '../lib/HealthAnalyticsCloudViewer-stack';
 
 const app = new cdk.App();
@@ -28,7 +28,7 @@ const prodStack = new HealthAnalyticsCloudViewerStack(prodStage, 'HealthAnalytic
   stackName: prodStage.stageName + '-' + 'HealthAnalyticsCloudViewerStack',
 });
 
-new PipelineStack(app, 'PipelineStack', {
+new DeploymentPipelineStack(app, 'DeploymentPipelineStack', {
   env,
   testStage,
   prodStage,

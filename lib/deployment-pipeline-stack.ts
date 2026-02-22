@@ -1,19 +1,19 @@
 /**
- * Pipeline stack: CodePipeline with GitHub source, synth (npm ci + cdk synth), and deploy stage.
+ * Deployment pipeline stack: CodePipeline with GitHub source, synth (npm ci + cdk synth), and deploy stage.
  * Deploys the CloudViewer app stage only via the pipeline (no standalone app stack).
  */
 import * as cdk from 'aws-cdk-lib';
 import * as pipelines from 'aws-cdk-lib/pipelines';
 import { Construct } from 'constructs';
 
-export interface PipelineStackProps extends cdk.StackProps {
+export interface DeploymentPipelineStackProps extends cdk.StackProps {
   /** Stage that contains CloudViewerStack; pipeline deploys this stage. */
   readonly testStage: cdk.Stage;
   readonly prodStage: cdk.Stage;
 }
 
-export class PipelineStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props: PipelineStackProps) {
+export class DeploymentPipelineStack extends cdk.Stack {
+  constructor(scope: Construct, id: string, props: DeploymentPipelineStackProps) {
     super(scope, id, props);
 
     const owner = this.node.tryGetContext('github:owner') as string | undefined ?? 'joracine';
