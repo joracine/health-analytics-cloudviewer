@@ -4,11 +4,11 @@ Serverless file-upload app: static website (Browse + Upload), presigned S3 URLs,
 
 ## Deploy (PowerShell)
 
-From the project root, with AWS CLI configured and CDK bootstrapped for the account/region:
+The app is deployed **only through the pipeline**. From the project root, with AWS CLI configured and CDK bootstrapped:
 
 ```powershell
 cd "d:\Google Drive\Health\Analyses\CloudViewer.project"
-npx cdk deploy CloudViewerStack --require-approval never
+npx cdk deploy PipelineStack --require-approval never
 ```
 
 First-time in an account/region, bootstrap first:
@@ -17,4 +17,4 @@ First-time in an account/region, bootstrap first:
 npx cdk bootstrap
 ```
 
-Stack outputs: **WebsiteUrl** (CloudFront) and **UploadApiUrl** (API base). Use the CloudFront URL to open the upload page.
+After the pipeline exists, push to **main** (or use “Release change” in CodePipeline) to build and deploy the app. Stack outputs (**WebsiteUrl**, **UploadApiUrl**) are on the **Prod** stage; use the CloudFront URL to open the upload page.

@@ -1,11 +1,19 @@
 #!/usr/bin/env node
 import * as cdk from 'aws-cdk-lib';
+import { PipelineStack } from '../lib/pipeline-stack';
 import { CloudViewerStack } from '../lib/upload-stack';
 
 const app = new cdk.App();
-new CloudViewerStack(app, 'CloudViewerStack', {
-  env: {
-    account: process.env.CDK_DEFAULT_ACCOUNT,
-    region: process.env.CDK_DEFAULT_REGION,
-  },
+
+const env = {
+  account: process.env.CDK_DEFAULT_ACCOUNT,
+  region: process.env.CDK_DEFAULT_REGION,
+};
+
+const cloudViewerStage = new cdk.Stage(app, 'Prod', { env });
+new CloudViewerStack(cloudViewerStage, 'CloudViewerStack');
+
+new PipelineStack(app, 'PipelineStack', {
+  env,
+  cloudViewerStage,
 });

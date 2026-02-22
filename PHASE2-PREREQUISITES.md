@@ -1,6 +1,6 @@
 # Phase 2: Prerequisites (steps you complete)
 
-Complete these steps before or in parallel with the pipeline implementation. The agent will handle the code (pipeline stack, `bin/app.ts`); you handle AWS Console setup, bootstrap, and first deploy.
+Complete these steps before or in parallel with the pipeline implementation. The **pipeline itself** is created by the steps in [PHASE2-PIPELINE-STEPS.md](PHASE2-PIPELINE-STEPS.md) (code: `lib/pipeline-stack.ts`, `bin/app.ts`). This doc covers what **you** do: AWS Console setup, bootstrap, and first deploy.
 
 ---
 
@@ -13,6 +13,8 @@ Complete these steps before or in parallel with the pipeline implementation. The
 5. After creation, wait until the connection status is **Available** (may take a minute). If it stays **Pending**, complete the GitHub authorization in the email or connector page.
 
 **Required:** Repo **health-analytics-cloudviewer** and branch **main** must exist and be the ones you will use for the pipeline. The connection grants access to repos in the GitHub account you authorized.
+
+**Configured in this project:** GitHub owner **joracine** and the CodeConnections ARN are set in `cdk.json` under `context` (`github:owner`, `github:connectionArn`) for the pipeline stack to use.
 
 ---
 
@@ -51,7 +53,7 @@ Resolve any errors (e.g. CodeStar Connection not **Available**, wrong repo name 
 ## 5. First pipeline run
 
 - Push a small change to **main**, or in **CodePipeline** use **Release change**.
-- Confirm **Source** pulls from GitHub, **Build** runs `npm ci`, `npm run build`, `npx cdk synth`, and **Deploy** updates the CloudViewer stack.
+- Confirm **Source** pulls from GitHub, **Build** runs `npm ci` and `npx cdk synth`, and **Deploy** updates the CloudViewer stack.
 
 ---
 

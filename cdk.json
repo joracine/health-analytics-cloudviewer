@@ -1,23 +1,14 @@
 {
   "app": "npx ts-node bin/app.ts",
   "watch": {
-    "include": [
-      "**"
-    ],
-    "exclude": [
-      "README.md",
-      "cdk*.json",
-      "**/*.d.ts",
-      "**/*.js",
-      "tsconfig.json",
-      "package*.json",
-      "node_modules",
-      "test"
-    ]
+    "include": ["**"],
+    "exclude": ["README.md", "cdk*.json", "**/*.d.ts", "**/*.js", "tsconfig.json", "package*.json", "node_modules", "test"]
   },
   "context": {
     "@aws-cdk/aws-lambda:recognizeLayerVersion": true,
     "@aws-cdk/core:checkSecretUsage": true,
-    "@aws-cdk/core:target-partition": "aws"
+    "@aws-cdk/core:target-partition": "aws",
+    "github:owner": "joracine",
+    "github:connectionArn": "arn:aws:codeconnections:us-east-1:595682864972:connection/b9ac83ad-34b4-4c2b-9162-b30df10a8e15"
   }
 }

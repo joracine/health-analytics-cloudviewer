@@ -55,7 +55,7 @@
 - [ ] Add GitHub source in pipeline (repo owner from stack prop or `cdk.json` context).
 
 ### 2.4 Build stage
-- [ ] Add `ShellStep`: `npm ci`, `npm run build`, `npx cdk synth`. CodeBuild image with Node 20 (e.g. `STANDARD_7_0`). Output `cdk.out`.
+- [ ] Add `ShellStep`: `npm ci`, `npx cdk synth`. CodeBuild image with Node 20 (e.g. `STANDARD_7_0`). Output `cdk.out`. (No `npm run build`—CDK uses ts-node.)
 
 ### 2.5 Deploy stage
 - [ ] Add stage that deploys `CloudViewerStack` via pipeline `addStage()`.
