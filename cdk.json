@@ -9,6 +9,8 @@
     "@aws-cdk/core:checkSecretUsage": true,
     "@aws-cdk/core:target-partition": "aws",
     "github:owner": "joracine",
-    "github:connectionArn": "arn:aws:codeconnections:us-east-1:595682864972:connection/b9ac83ad-34b4-4c2b-9162-b30df10a8e15"
+    "github:connectionArn": "arn:aws:codeconnections:us-east-1:595682864972:connection/b9ac83ad-34b4-4c2b-9162-b30df10a8e15",
+    "deploy:account": "595682864972",
+    "deploy:region": "us-east-1"
   }
 }
