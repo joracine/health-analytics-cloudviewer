@@ -29,7 +29,11 @@ export class PipelineStack extends cdk.Stack {
 
     const synth = new pipelines.ShellStep('Synth', {
       input: source,
-      commands: ['npm ci', 'npx cdk synth'],
+      commands: [
+        'npm ci',
+        'npx cdk synth',
+        'npx cdk ls', // show synthesized stacks (helps debug SelfMutate "no stacks match")
+      ],
     });
 
     const pipeline = new pipelines.CodePipeline(this, 'Pipeline', {
