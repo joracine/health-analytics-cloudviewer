@@ -14,14 +14,22 @@ if (!env.account || !env.region) {
   throw new Error('env.account and env.region must be set (set CDK_DEFAULT_ACCOUNT/REGION or deploy:account/deploy:region in cdk.json context)');
 }
 
+const testStage = new cdk.Stage(app, 'Test', { env });
 const prodStage = new cdk.Stage(app, 'Prod', { env });
+
+const testStack = new HealthAnalyticsCloudViewerStack(testStage, 'HealthAnalyticsCloudViewerStack', {
+  env,
+  stackName: testStage.stageName + '-' + 'HealthAnalyticsCloudViewerStack',
+});
+
 // Explicit stackName to include stage name in the stack name
-new HealthAnalyticsCloudViewerStack(prodStage, 'HealthAnalyticsCloudViewerStack', {
+const prodStack = new HealthAnalyticsCloudViewerStack(prodStage, 'HealthAnalyticsCloudViewerStack', {
   env,
   stackName: prodStage.stageName + '-' + 'HealthAnalyticsCloudViewerStack',
 });
 
 new PipelineStack(app, 'PipelineStack', {
   env,
+  testStage,
   prodStage,
 });
