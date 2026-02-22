@@ -20,6 +20,11 @@ export const UPLOAD_KEY_PREFIX = 'uploads/userdata/pdftestresults/';
 /** Key prefix for website assets in the same bucket (console "subfolder"). */
 export const WEBSITE_KEY_PREFIX = 'website/';
 
+export interface HealthAnalyticsCloudViewerStackProps extends cdk.StackProps {
+  /** Stage name (e.g. Test, Prod); used in bucket name so each stage has its own bucket. */
+  readonly stageName: string;
+}
+
 export class HealthAnalyticsCloudViewerStack extends cdk.Stack {
   /** Single parent bucket: uploads under UPLOAD_KEY_PREFIX, website under WEBSITE_KEY_PREFIX. */
   public readonly masterBucket: s3.Bucket;
@@ -33,15 +38,15 @@ export class HealthAnalyticsCloudViewerStack extends cdk.Stack {
   /** Serves website from master bucket prefix WEBSITE_KEY_PREFIX. */
   public readonly distribution: cloudfront.Distribution;
 
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, props: HealthAnalyticsCloudViewerStackProps) {
     super(scope, id, props);
 
     // Permissions: bucket BLOCK_ALL + CORS for browser PUT; presign = PutObject (upload prefix only);
     // CloudFront = OAC GetObject; BucketDeployment = write website prefix; API invokes Lambda via integration.
 
-    // --- Upload bucket + presign Lambda ---
+    // --- Upload bucket + presign Lambda (stage name in bucket name so Test and Prod use different buckets) ---
     this.masterBucket = new s3.Bucket(this, 'MasterBucket', {
-      bucketName: `health-analytics-cloudviewer-${this.account}`,
+      bucketName: `health-analytics-cloudviewer-${props.stageName.toLowerCase()}-${this.account}`,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       cors: [
         {

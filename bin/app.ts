@@ -17,14 +17,15 @@ if (!env.account || !env.region) {
 const testStage = new cdk.Stage(app, 'Test', { env });
 const prodStage = new cdk.Stage(app, 'Prod', { env });
 
-const testStack = new HealthAnalyticsCloudViewerStack(testStage, 'HealthAnalyticsCloudViewerStack', {
+new HealthAnalyticsCloudViewerStack(testStage, 'HealthAnalyticsCloudViewerStack', {
   env,
+  stageName: testStage.stageName,
   stackName: testStage.stageName + '-' + 'HealthAnalyticsCloudViewerStack',
 });
 
-// Explicit stackName to include stage name in the stack name
-const prodStack = new HealthAnalyticsCloudViewerStack(prodStage, 'HealthAnalyticsCloudViewerStack', {
+new HealthAnalyticsCloudViewerStack(prodStage, 'HealthAnalyticsCloudViewerStack', {
   env,
+  stageName: prodStage.stageName,
   stackName: prodStage.stageName + '-' + 'HealthAnalyticsCloudViewerStack',
 });
 
