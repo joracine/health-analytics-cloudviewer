@@ -8,7 +8,7 @@ import { Construct } from 'constructs';
 
 export interface PipelineStackProps extends cdk.StackProps {
   /** Stage that contains CloudViewerStack; pipeline deploys this stage. */
-  readonly cloudViewerStage: cdk.Stage;
+  readonly prodStage: cdk.Stage;
 }
 
 export class PipelineStack extends cdk.Stack {
@@ -41,6 +41,6 @@ export class PipelineStack extends cdk.Stack {
       pipelineName: 'health-analytics-cloudviewer-pipeline',
     });
 
-    pipeline.addStage(props.cloudViewerStage);
+    pipeline.addStage(props.prodStage);
   }
 }
