@@ -5,9 +5,25 @@
 import * as cdk from 'aws-cdk-lib';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as pipelines from 'aws-cdk-lib/pipelines';
-import { Construct } from 'constructs';
+import { Construct, IConstruct } from 'constructs';
 
 const UPLOAD_PREFIX = 'uploads/userdata/pdftestresults/';
+
+/** Aspect that grants CDK bootstrap roles read on the pipeline artifact bucket (runs after pipeline is built). */
+class ArtifactBucketGrantAspect implements cdk.IAspect {
+  constructor(
+    private readonly account: string,
+    private readonly region: string,
+  ) {}
+
+  visit(node: IConstruct): void {
+    if (!(node instanceof pipelines.CodePipeline)) return;
+    const deployRoleArn = `arn:${cdk.Aws.PARTITION}:iam::${this.account}:role/cdk-hnb659fds-deploy-role-${this.account}-${this.region}`;
+    const cfnExecRoleArn = `arn:${cdk.Aws.PARTITION}:iam::${this.account}:role/cdk-hnb659fds-cfn-exec-role-${this.account}-${this.region}`;
+    node.pipeline.artifactBucket.grantRead(new iam.ArnPrincipal(deployRoleArn));
+    node.pipeline.artifactBucket.grantRead(new iam.ArnPrincipal(cfnExecRoleArn));
+  }
+}
 
 export interface DeploymentPipelineStackProps extends cdk.StackProps {
   /** Stage that contains CloudViewerStack; pipeline deploys this stage. */
@@ -82,5 +98,12 @@ export class DeploymentPipelineStack extends cdk.Stack {
       post: [integrationTestStep],
     });
     pipeline.addStage(props.prodStage);
+
+    // The default artifact bucket is only granted to the pipeline role. The CloudFormation
+    // "Prepare" (create change set) action runs as the bootstrap deploy role, which must
+    // be able to read the template from the artifact bucket. Grant that role (and the
+    // CloudFormation execution role) read access so "Failed to create change set" is avoided.
+    // We use an aspect so grants run during synthesis after the pipeline is built.
+    cdk.Aspects.of(pipeline).add(new ArtifactBucketGrantAspect(this.account, this.region));
   }
 }
