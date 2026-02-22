@@ -17,4 +17,6 @@ First-time in an account/region, bootstrap first:
 npx cdk bootstrap
 ```
 
-After the pipeline exists, push to **main** (or use “Release change” in CodePipeline) to build and deploy the app. Stack outputs (**WebsiteUrl**, **UploadApiUrl**) are on the **Prod** stage; use the CloudFront URL to open the upload page.
+After the pipeline exists, push to **main** (or use “Release change” in CodePipeline) to build and deploy the app. **Pipeline flow:** Source → Build (synth) → Deploy Test → **Run integration tests** → Deploy Prod. Integration tests run after the Test stage is deployed and before Prod; they call the Test upload API and verify upload round-trip. At the start of each test run, the Test bucket's upload prefix is cleared so runs are repeatable. If tests fail, Prod is not deployed.
+
+Stack outputs (**WebsiteUrl**, **UploadApiUrl**) are on the **Prod** stage; use the CloudFront URL to open the upload page.

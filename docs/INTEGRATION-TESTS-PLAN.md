@@ -28,16 +28,16 @@ Add a pipeline step between **Test** and **Prod** that runs integration tests ag
 
 ### Phase 3: Pipeline wiring
 
-- [ ] **3.1** In `lib/deployment-pipeline-stack.ts`, create an integration test step (e.g. `ShellStep` or `CodeBuildStep`) with commands: `npm ci`, `npm run test:integration`.
-- [ ] **3.2** Wire Test stage stack outputs to the step: use `envFromCfnOutputs` to set `UPLOAD_API_URL` (and `TEST_BUCKET`, and optionally `UPLOAD_PREFIX` / `WEBSITE_URL`) from the Test stack’s outputs.
-- [ ] **3.3** Add the step as a **post** step on the Test stage: `pipeline.addStage(props.testStage, { post: [ integrationTestStep ] })`.
-- [ ] **3.4** Grant the integration test step’s role (or pipeline build role) S3 permissions: ListBucket, GetObject, DeleteObject on the Test bucket (or `health-analytics-cloudviewer-test-*`). Restrict DeleteObject to the upload prefix if possible.
+- [x] **3.1** In `lib/deployment-pipeline-stack.ts`, create an integration test step (e.g. `ShellStep` or `CodeBuildStep`) with commands: `npm ci`, `npm run test:integration`.
+- [x] **3.2** Wire Test stage stack outputs to the step: use `envFromCfnOutputs` to set `UPLOAD_API_URL` (and `TEST_BUCKET`, and optionally `UPLOAD_PREFIX` / `WEBSITE_URL`) from the Test stack’s outputs.
+- [x] **3.3** Add the step as a **post** step on the Test stage: `pipeline.addStage(props.testStage, { post: [ integrationTestStep ] })`.
+- [x] **3.4** Grant the integration test step’s role (or pipeline build role) S3 permissions: ListBucket, GetObject, DeleteObject on the Test bucket (or `health-analytics-cloudviewer-test-*`). Restrict DeleteObject to the upload prefix if possible.
 
 ### Phase 4: Verification & docs
 
 - [ ] **4.1** Run integration tests locally (with env vars set to a deployed Test stack) and confirm they pass.
-- [ ] **4.2** Run `npx cdk synth` and confirm the pipeline includes the post step and IAM.
-- [ ] **4.3** Update README or pipeline docs to state that integration tests run after Test and before Prod, and that they clear the Test bucket’s upload prefix at the start of each run.
+- [x] **4.2** Run `npx cdk synth` and confirm the pipeline includes the post step and IAM.
+- [x] **4.3** Update README or pipeline docs to state that integration tests run after Test and before Prod, and that they clear the Test bucket’s upload prefix at the start of each run.
 
 ---
 
