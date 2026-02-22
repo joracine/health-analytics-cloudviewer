@@ -1,5 +1,5 @@
 {
-  "include": ["bin/**/*", "lib/**/*"],
+  "include": ["bin/**/*", "lib/**/*","tests/**/*"],
   "compilerOptions": {
     "target": "ES2020",
     "module": "commonjs",
@@ -27,3 +27,4 @@
   },
   "exclude": ["node_modules", "cdk.out", "dist", "lambda"]
 }
+

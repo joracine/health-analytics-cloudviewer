@@ -94,6 +94,12 @@ export class HealthAnalyticsCloudViewerStack extends cdk.Stack {
       exportName: 'CloudViewerUploadApiUrl',
     });
 
+    new cdk.CfnOutput(this, 'MasterBucketName', {
+      value: this.masterBucket.bucketName,
+      description: 'Master S3 bucket name (for integration tests)',
+      exportName: 'CloudViewerMasterBucketName',
+    });
+
     // --- CloudFront serves website from master bucket prefix WEBSITE_KEY_PREFIX ---
     this.distribution = new cloudfront.Distribution(this, 'WebsiteDistribution', {
       defaultBehavior: {
