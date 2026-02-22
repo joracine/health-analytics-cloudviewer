@@ -70,7 +70,7 @@ export class CloudViewerStack extends cdk.Stack {
 
     // --- API: POST /uploaded → presign Lambda ---
     this.httpApi = new apigwv2.HttpApi(this, 'UploadApi', {
-      apiName: 'cloudviewer-upload-api',
+      apiName: 'health-analytics-cloudviewer-upload-api',
       corsPreflight: {
         allowOrigins: ['*'],
         allowMethods: [apigwv2.CorsHttpMethod.POST, apigwv2.CorsHttpMethod.OPTIONS],

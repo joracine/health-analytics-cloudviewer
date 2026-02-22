@@ -38,7 +38,7 @@ export class PipelineStack extends cdk.Stack {
 
     const pipeline = new pipelines.CodePipeline(this, 'Pipeline', {
       synth,
-      pipelineName: 'cloudviewer-pipeline',
+      pipelineName: 'health-analytics-cloudviewer-pipeline',
     });
 
     pipeline.addStage(props.cloudViewerStage);
