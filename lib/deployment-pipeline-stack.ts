@@ -59,6 +59,8 @@ export class DeploymentPipelineStack extends cdk.Stack {
     const pipeline = new pipelines.CodePipeline(this, 'Pipeline', {
       synth,
       pipelineName: 'health-analytics-cloudviewer-pipeline',
+      // Direct deploy avoids "ChangeSet does not exist" when a change set was already executed or expired.
+      useChangeSets: false,
     });
 
     // Test stack outputs for integration test step (post step runs after Test stage deploy)

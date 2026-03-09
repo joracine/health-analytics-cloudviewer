@@ -48,6 +48,7 @@ export class HealthAnalyticsCloudViewerStack extends cdk.Stack {
     this.masterBucket = new s3.Bucket(this, 'MasterBucket', {
       bucketName: `health-analytics-cloudviewer-${props.stageName.toLowerCase()}-${this.account}`,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
       cors: [
         {
           allowedOrigins: ['*'],
