@@ -51,7 +51,13 @@ export class DeploymentPipelineStack extends cdk.Stack {
       input: source,
       commands: [
         'npm ci',
+        'echo "=== Verifying lambda source exists ==="',
+        'ls -la lambda/presign-uploader/',
+        'echo "=== Running build:lambda ==="',
         'npm run build:lambda',
+        'echo "=== Verifying build output ==="',
+        'ls -la dist/lambda/presign-uploader/',
+        'test -f dist/lambda/presign-uploader/index.js || (echo "ERROR: index.js missing after build:lambda" && exit 1)',
         'npx cdk synth',
         'npx cdk ls', // show synthesized stacks (helps debug SelfMutate "no stacks match")
       ],
