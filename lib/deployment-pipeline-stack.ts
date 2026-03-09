@@ -51,6 +51,7 @@ export class DeploymentPipelineStack extends cdk.Stack {
       input: source,
       commands: [
         'npm ci',
+        'npm run build:lambda',
         'npx cdk synth',
         'npx cdk ls', // show synthesized stacks (helps debug SelfMutate "no stacks match")
       ],

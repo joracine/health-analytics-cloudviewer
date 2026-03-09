@@ -9,7 +9,6 @@ import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
-import * as lambdaNodejs from 'aws-cdk-lib/aws-lambda-nodejs';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
 import { Construct } from 'constructs';
@@ -30,7 +29,7 @@ export class HealthAnalyticsCloudViewerStack extends cdk.Stack {
   public readonly masterBucket: s3.Bucket;
 
   /** Returns presigned PUT URL for given filename. */
-  public readonly presignUploaderFn: lambdaNodejs.NodejsFunction;
+  public readonly presignUploaderFn: lambda.Function;
 
   /** POST /uploaded → presign Lambda. URL injected into website config.js. */
   public readonly httpApi: apigwv2.HttpApi;
@@ -58,17 +57,14 @@ export class HealthAnalyticsCloudViewerStack extends cdk.Stack {
       ],
     });
 
-    this.presignUploaderFn = new lambdaNodejs.NodejsFunction(this, 'PresignUploaderFn', {
-      entry: path.join(__dirname, '..', 'lambda', 'presign-uploader', 'index.ts'),
+    this.presignUploaderFn = new lambda.Function(this, 'PresignUploaderFn', {
       runtime: lambda.Runtime.NODEJS_20_X,
-      handler: 'handler',
+      handler: 'index.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, '..', 'dist', 'lambda', 'presign-uploader')),
       environment: {
         BUCKET_NAME: this.masterBucket.bucketName,
         REGION: this.region,
         KEY_PREFIX: UPLOAD_KEY_PREFIX,
-      },
-      bundling: {
-        forceDockerBundling: true,
       },
     });
     // Presign Lambda: only allow generating PUT URLs for keys under UPLOAD_KEY_PREFIX
