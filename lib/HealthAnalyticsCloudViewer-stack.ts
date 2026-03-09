@@ -30,7 +30,7 @@ export class HealthAnalyticsCloudViewerStack extends cdk.Stack {
   public readonly masterBucket: s3.Bucket;
 
   /** Returns presigned PUT URL for given filename. */
-  public readonly presignFn: lambdaNodejs.NodejsFunction;
+  public readonly presignUploaderFn: lambdaNodejs.NodejsFunction;
 
   /** POST /uploaded → presign Lambda. URL injected into website config.js. */
   public readonly httpApi: apigwv2.HttpApi;
@@ -58,8 +58,8 @@ export class HealthAnalyticsCloudViewerStack extends cdk.Stack {
       ],
     });
 
-    this.presignFn = new lambdaNodejs.NodejsFunction(this, 'PresignFn', {
-      entry: path.join(__dirname, '..', 'lambda', 'presign', 'index.ts'),
+    this.presignUploaderFn = new lambdaNodejs.NodejsFunction(this, 'PresignUploaderFn', {
+      entry: path.join(__dirname, '..', 'lambda', 'presign-uploader', 'index.ts'),
       runtime: lambda.Runtime.NODEJS_20_X,
       handler: 'handler',
       environment: {
@@ -72,7 +72,7 @@ export class HealthAnalyticsCloudViewerStack extends cdk.Stack {
       },
     });
     // Presign Lambda: only allow generating PUT URLs for keys under UPLOAD_KEY_PREFIX
-    this.masterBucket.grantPut(this.presignFn, `${UPLOAD_KEY_PREFIX}*`);
+    this.masterBucket.grantPut(this.presignUploaderFn, `${UPLOAD_KEY_PREFIX}*`);
 
     // --- API: POST /uploaded → presign Lambda ---
     this.httpApi = new apigwv2.HttpApi(this, 'UploadApi', {
@@ -86,7 +86,7 @@ export class HealthAnalyticsCloudViewerStack extends cdk.Stack {
     this.httpApi.addRoutes({
       path: '/uploaded',
       methods: [apigwv2.HttpMethod.POST],
-      integration: new HttpLambdaIntegration('PresignIntegration', this.presignFn),
+      integration: new HttpLambdaIntegration('PresignIntegration', this.presignUploaderFn),
     });
 
     new cdk.CfnOutput(this, 'UploadApiUrl', {
