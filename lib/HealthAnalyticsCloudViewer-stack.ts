@@ -8,6 +8,7 @@ import * as apigwv2 from 'aws-cdk-lib/aws-apigatewayv2';
 import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
@@ -47,11 +48,9 @@ export class HealthAnalyticsCloudViewerStack extends cdk.Stack {
     const bucketName = `health-analytics-cloudviewer-${props.stageName.toLowerCase()}-${this.account}`;
     try {
       const existingBucket = s3.Bucket.fromBucketName(this, 'CheckBucket', bucketName);
-      // If we get here, bucket exists—use it instead of creating
       console.log(`Bucket ${bucketName} already exists, importing...`);
       this.masterBucket = existingBucket;
     } catch {
-      // Bucket doesn't exist, safe to create
       this.masterBucket = new s3.Bucket(this, 'HealthAnalyticsBucket', {
         bucketName,
         blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
@@ -116,6 +115,26 @@ export class HealthAnalyticsCloudViewerStack extends cdk.Stack {
       defaultRootObject: 'index.html',
     });
 
+    // Custom role with explicit IAM permissions for destination bucket.
+    // Required when using imported buckets: bucket.grantReadWrite() adds bucket policy, which
+    // may not be updatable for imported buckets. IAM policy on the role works regardless.
+    const deployRole = new iam.Role(this, 'DeployWebsiteRole', {
+      assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
+      description: 'Role for BucketDeployment to sync website to S3',
+    });
+    deployRole.addToPolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        's3:GetObject*', 's3:GetBucket*', 's3:List*',
+        's3:DeleteObject*', 's3:PutObject', 's3:PutObjectLegalHold',
+        's3:PutObjectRetention', 's3:PutObjectTagging', 's3:PutObjectVersionTagging', 's3:Abort*',
+      ],
+      resources: [
+        this.masterBucket.bucketArn,
+        `${this.masterBucket.bucketArn}/*`,
+      ],
+    }));
+
     new s3deploy.BucketDeployment(this, 'DeployWebsite', {
       sources: [
         s3deploy.Source.asset(path.join(__dirname, '..', 'website'), {
@@ -130,6 +149,8 @@ export class HealthAnalyticsCloudViewerStack extends cdk.Stack {
       destinationKeyPrefix: WEBSITE_KEY_PREFIX,
       distribution: this.distribution,
       distributionPaths: ['/*'],
+      role: deployRole,
+      prune: false, // Avoid --delete; can fail on imported/retained buckets (Object Lock, versioning, etc.)
     });
 
     new cdk.CfnOutput(this, 'WebsiteUrl', {
