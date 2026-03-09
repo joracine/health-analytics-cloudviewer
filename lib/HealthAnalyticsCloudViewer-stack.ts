@@ -113,7 +113,9 @@ export class HealthAnalyticsCloudViewerStack extends cdk.Stack {
 
     new s3deploy.BucketDeployment(this, 'DeployWebsite', {
       sources: [
-        s3deploy.Source.asset(path.join(__dirname, '..', 'website')),
+        s3deploy.Source.asset(path.join(__dirname, '..', 'website'), {
+          displayName: 'Website',
+        }),
         s3deploy.Source.data(
           'config.js',
           `window.API_BASE_URL = '${this.httpApi.url ?? ''}';`
