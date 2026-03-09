@@ -26,7 +26,7 @@ export interface HealthAnalyticsCloudViewerStackProps extends cdk.StackProps {
 
 export class HealthAnalyticsCloudViewerStack extends cdk.Stack {
   /** Single parent bucket: uploads under UPLOAD_KEY_PREFIX, website under WEBSITE_KEY_PREFIX. */
-  public readonly masterBucket: s3.Bucket;
+  public readonly masterBucket: s3.IBucket;
 
   /** Returns presigned PUT URL for given filename. */
   public readonly presignUploaderFn: lambda.Function;
@@ -44,18 +44,27 @@ export class HealthAnalyticsCloudViewerStack extends cdk.Stack {
     // CloudFront = OAC GetObject; BucketDeployment = write website prefix; API invokes Lambda via integration.
 
     // --- Upload bucket + presign Lambda (stage name in bucket name so Test and Prod use different buckets) ---
-    this.masterBucket = new s3.Bucket(this, 'MasterBucket', {
-      bucketName: `health-analytics-cloudviewer-${props.stageName.toLowerCase()}-${this.account}`,
-      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-      removalPolicy: cdk.RemovalPolicy.RETAIN,
-      cors: [
-        {
-          allowedOrigins: ['*'],
-          allowedMethods: [s3.HttpMethods.PUT, s3.HttpMethods.GET],
-          allowedHeaders: ['*'],
-        },
-      ],
-    });
+    const bucketName = `health-analytics-cloudviewer-${props.stageName.toLowerCase()}-${this.account}`;
+    try {
+      const existingBucket = s3.Bucket.fromBucketName(this, 'CheckBucket', bucketName);
+      // If we get here, bucket exists—use it instead of creating
+      console.log(`Bucket ${bucketName} already exists, importing...`);
+      this.masterBucket = existingBucket;
+    } catch {
+      // Bucket doesn't exist, safe to create
+      this.masterBucket = new s3.Bucket(this, 'HealthAnalyticsBucket', {
+        bucketName,
+        blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+        removalPolicy: cdk.RemovalPolicy.RETAIN,
+        cors: [
+          {
+            allowedOrigins: ['*'],
+            allowedMethods: [s3.HttpMethods.PUT, s3.HttpMethods.GET],
+            allowedHeaders: ['*'],
+          },
+        ],
+      });
+    }
 
     this.presignUploaderFn = new lambda.Function(this, 'PresignUploaderFn', {
       runtime: lambda.Runtime.NODEJS_20_X,
