@@ -68,7 +68,7 @@ export class HealthAnalyticsCloudViewerStack extends cdk.Stack {
         KEY_PREFIX: UPLOAD_KEY_PREFIX,
       },
       bundling: {
-        forceDockerBundling: false,
+        forceDockerBundling: true,
       },
     });
     // Presign Lambda: only allow generating PUT URLs for keys under UPLOAD_KEY_PREFIX
