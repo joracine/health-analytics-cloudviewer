@@ -86,7 +86,7 @@ export class HealthAnalyticsCloudViewerStack extends cdk.Stack {
     this.httpApi.addRoutes({
       path: '/uploaded',
       methods: [apigwv2.HttpMethod.POST],
-      integration: new HttpLambdaIntegration('PresignIntegration', this.presignUploaderFn),
+      integration: new HttpLambdaIntegration('PresignUploaderIntegration', this.presignUploaderFn),
     });
 
     new cdk.CfnOutput(this, 'UploadApiUrl', {
